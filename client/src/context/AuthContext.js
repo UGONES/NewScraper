@@ -93,7 +93,6 @@ export const AuthProvider = ({ children }) => {
       clearStoredAuth();
     }
   }, [auth, logout]);
-    console.warn('[DEBUG] No valid token. Redirecting to /signin');
 
   // ✅ Fixes React warning: include login/logout in useMemo
   const value = useMemo(() => ({ auth, login, logout }), [auth, login, logout]);

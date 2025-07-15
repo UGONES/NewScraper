@@ -7,6 +7,7 @@ import {
   // useLocation
 } from 'react-router-dom';
 
+import { useEffect } from 'react';
 import { AuthProvider,
   //  useAuth
    } from './context/AuthContext';
@@ -32,6 +33,10 @@ import Footer from './components/Footer';
 
 
 export default function App() {
+  useEffect(() => {
+  setTimeout(() => console.log("Hi"), 1000);
+}, []);
+
   return (
     <Router>
       <AuthProvider>

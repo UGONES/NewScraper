@@ -97,3 +97,33 @@ export const login = async (req, res) => {
     res.status(500).json({ message: 'Login error' });
   }
 };
+// Request a password reset (send token via email – logic stubbed)
+export const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email required' });
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+  // TODO: send token via email to user (logic not included)
+  res.json({ message: 'Reset token sent', token }); // temp for dev
+};
+
+// Reset password with token (from email or frontend)
+export const resetPasswordWithToken = async (req, res) => {
+  const { token, newPassword } = req.body;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid or expired token' });
+  }
+};

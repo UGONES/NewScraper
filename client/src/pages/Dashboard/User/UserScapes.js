@@ -16,28 +16,37 @@ const UserScrapes = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    api.get('/scrape/user')
+      .then(({ data }) => setScrapes(data))
+      .catch((err) => {
+        console.error('Failed to load user scrapes:', err);
+        setError('Failed to load scrapes.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleScrape = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+
     try {
-      const { data } = await api.post('/scrape/user', { input }).finally(() => setLoading(false));
+      const { data } = await api.post('/scrape/user', { input });
       setScrapes([data, ...scrapes]);
       setSelectedScrape(data);
       setInput('');
-      setError('');
+      setSuccessMsg('Scrape successful!');
+      setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Scrape failed';
+      const msg = err.response?.data?.error || 'Scrape failed';
       setError(msg);
       setTimeout(() => setError(''), 5000);
     } finally {
-      setSuccessMsg('Scrape successful!');
-      setTimeout(() => setSuccessMsg(''), 5000);
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    api.get('/scrape/user')
-      .then(({ data }) => setScrapes(data));
-  }, []);
 
   const formatDate = (iso) => {
     const date = new Date(iso);
@@ -46,24 +55,21 @@ const UserScrapes = () => {
     });
   };
 
-
   return (
     <div className="dashboard-wrapper">
       <Sidebar role={auth?.role} />
 
-      {/* Sidebar toggle button (always visible) */}
+      {/* Sidebar toggle button */}
       {!sidebarOpen && (
         <button className="sidebar-toggle" onClick={() => setSidebarOpen(true)}>
           <FiMenu />
         </button>
       )}
-      {/* Slide-in sidebar + overlay */}
+
+      {/* Slide-in history sidebar */}
       {sidebarOpen && (
         <div className="history-overlay" onClick={() => setSidebarOpen(false)}>
-          <aside
-            className={`history-sidebar open`}
-            onClick={(e) => e.stopPropagation()} // prevent overlay click from closing
-          >
+          <aside className="history-sidebar open" onClick={(e) => e.stopPropagation()}>
             <h2 className="history-title">
               <FiFileText />
               <span>Scrape History</span>
@@ -79,7 +85,7 @@ const UserScrapes = () => {
                   onClick={() => {
                     setSelectedScrape(scrape);
                     setShowAnalysis(false);
-                    setSidebarOpen(false); // auto-close on click
+                    setSidebarOpen(false);
                   }}
                 >
                   <div>{scrape.source.slice(0, 20)}</div>
@@ -93,15 +99,27 @@ const UserScrapes = () => {
 
       <main className="page-container dashboard-page">
         <h1 className="page-header">My Scrapes</h1>
-        {loading ? (<p>Loading User Scrapes ...</p>) : (
+
+        {loading ? (
+          <p>Loading User Scrapes...</p>
+        ) : (
           <>
+            {/* Error and Success messages */}
+            {error && (
+              <div className="popup-error">
+                {error}
+                <button className="close-btn" onClick={() => setError('')}>×</button>
+              </div>
+            )}
+            {successMsg && (
+              <div className="popup-success">
+                {successMsg}
+                <button className="close-btn" onClick={() => setSuccessMsg('')}>×</button>
+              </div>
+            )}
+
+            {/* Scrape form */}
             <form onSubmit={handleScrape} className="scrape-form">
-              {error && (
-                <div className="popup-error">
-                  {error}
-                  <button className="close-btn" onClick={() => setError('')}>×</button>
-                </div>
-              )}
               <textarea
                 rows={4}
                 value={input}
@@ -109,15 +127,10 @@ const UserScrapes = () => {
                 placeholder="Enter a URL or some text to scrape..."
                 required
               />
-              {successMsg && (
-                <div className="popup-success">
-                  {successMsg}
-                  <button className="close-btn" onClick={() => setSuccessMsg('')}>×</button>
-                </div>
-              )}
               <button type="submit" className="scrape-btn">Scrape</button>
             </form>
 
+            {/* Selected scrape display */}
             {selectedScrape && (
               <div className="scrape-display">
                 <h2 className="scrape-source">{selectedScrape.source}</h2>
@@ -139,7 +152,6 @@ const UserScrapes = () => {
             )}
           </>
         )}
-
       </main>
     </div>
   );

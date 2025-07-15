@@ -1,56 +1,8 @@
 import User from '../models/User.js';
+import ScrapedData from '../models/ScrapedData.js'; // 🔁 Add at top of file if not already
 import bcrypt from 'bcryptjs';
 
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().select('-password');
-    res.json(users);
-  } catch (error) {
-    console.error('Error getting users:', error.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-export const updateUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = { ...req.body };
-
-    // Prevent password update here
-    if (updates.password) {
-      delete updates.password;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    }).select('-password');
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json(updatedUser);
-  } catch (err) {
-    res.status(500).json({ message: 'Error updating user' });
-  }
-};
-
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedUser = await User.findByIdAndDelete(id);
-
-    if (!deletedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({ message: 'User deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error deleting user' });
-  }
-};
-
+// 🔄 Create user (admin only)
 export const createUserByAdmin = async (req, res) => {
   const { username, email, password, role, fullName } = req.body;
 
@@ -86,115 +38,155 @@ export const createUserByAdmin = async (req, res) => {
   }
 };
 
+// 👤 Get all users (admin)
+export const getAllUsers = async (_req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    console.error('Error getting users:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// 👤 Get single user by ID
 export const getUserById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findById(id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (err) {
-    console.error('Error fetching single user:', err.message);
-    if (err.name === 'CastError') {
-      return res.status(400).json({ message: 'Invalid user ID format' });
-    }
+    console.error('Get user by ID error:', err.message);
     res.status(500).json({ message: 'Server error fetching user' });
   }
 };
 
+// ✏️ Update user (admin)
+export const updateUser = async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    if (updates.password) delete updates.password;
+
+    const updated = await User.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true,
+    }).select('-password');
+
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating user' });
+  }
+};
+
+// ❌ Delete user
+export const deleteUser = async (req, res) => {
+  try {
+    const deleted = await User.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting user' });
+  }
+};
+
+// 👤 Get profile (token-based)
 export const getUserProfile = async (req, res) => {
   try {
-    const user = req.user; // This comes from verifyToken middleware
-    res.json({
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName || '',
-      bio: user.bio || '',
-      gender: user.gender || '',
-      description: user.description || '',
-      avatar: user.avatar || '',
-    });
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Failed to get profile' });
   }
 };
 
+// ✏️ Update own profile
 export const updateUserProfile = async (req, res) => {
   try {
     const { username, email, bio, fullName, description, gender } = req.body;
-
     const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
 
-    // Check for email duplication (only if it's changed)
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Check for duplicate email
     if (email && email !== user.email) {
-      const existingEmail = await User.findOne({ email });
-      if (existingEmail) {
-        return res.status(400).json({ message: 'Email is already in use by another user' });
-      }
+      const exists = await User.findOne({ email });
+      if (exists) return res.status(400).json({ message: 'Email already in use' });
     }
 
-    // Update profile fields
-    user.fullName = fullName || user.fullName;
     user.username = username || user.username;
     user.email = email || user.email;
+    user.fullName = fullName || user.fullName;
     user.bio = bio || user.bio;
     user.description = description || user.description;
     user.gender = gender || user.gender;
-
-    if (req.file) {
-      user.avatar = `/uploads/${req.file.filename}`;
-    }
+    if (req.file) user.avatar = `/uploads/${req.file.filename}`;
 
     await user.save();
 
-    res.json({
-      message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        bio: user.bio,
-        gender: user.gender,
-        description: user.description,
-        avatar: user.avatar,
-        role: user.role,
-      },
-    });
+    res.json({ message: 'Profile updated', user });
   } catch (err) {
     console.error('Update profile error:', err.message);
     res.status(500).json({ message: 'Failed to update profile' });
   }
 };
+
+// 🔐 Change password (logged-in user)
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'Current and new passwords are required' });
-    }
-
     const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
-    }
+    if (!isMatch) return res.status(401).json({ message: 'Current password incorrect' });
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
-    console.error('Change password error:', err.message);
     res.status(500).json({ message: 'Failed to change password' });
+  }
+};
+
+// 🔐 Forgot password handler (stub for future email flow)
+export const resetForgottenPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) return res.status(400).json({ message: 'Required fields missing' });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to reset password' });
+  }
+};
+
+// 📊 Get user dashboard summary (scrape count for logged-in user)
+export const getUserSummary = async (req, res, next) => {
+  try {
+    const myScrapes = await ScrapedData.countDocuments({ userId: req.user.id });
+    res.json({ myScrapes });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 📋 Admin-only: Get all users with full details (without password)
+export const getAllUsersFullForAdmin = async (_req, res, next) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    console.error("Error getting users:", error.message);
+    res.status(500).json({ message: "Server error fetching full user list" });
   }
 };

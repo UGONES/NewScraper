@@ -1,6 +1,6 @@
 import ScrapedData from '../models/ScrapedData.js';
 
-export const createData = async (req, res) => {
+export const createUserData = async (req, res) => {
   try {
     const { title, content } = req.body;
 

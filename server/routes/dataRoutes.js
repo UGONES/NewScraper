@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  createData,
+  createUserData,
   getProtected,
   getUserScrapes,
   getAllScrapes,
@@ -8,11 +8,12 @@ import {
   updateScrapeAdmin,
   deleteScrapeAdmin
 } from '../controllers/dataController.js';
+
 import { verifyToken } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Authenticated user routes
-router.post('/', verifyToken, createData);               // Create new scraped data
+router.post('/', verifyToken, createUserData);               // Create new scraped data
 router.get('/protected', verifyToken, getProtected);     // Get data depending on user role
 router.get('/user', verifyToken, getUserScrapes);        // Get scrapes for logged-in user
 

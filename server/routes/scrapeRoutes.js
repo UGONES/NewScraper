@@ -2,18 +2,16 @@ import express from 'express';
 import { body } from 'express-validator';
 import {
   createScrape,
-  getOwnScrapes,
-  getAllScrapes
+  getOwnAIScrapes,
+  getAllAIScrapes
 } from '../controllers/scrapeController.js';
-import { verifyToken, isAdmin, isUser,allowUserOrAdmin } from '../middleware/authMiddleware.js';
+import { verifyToken, isAdmin, allowUserOrAdmin } from '../middleware/authMiddleware.js';
 import { validateScrapeInput } from '../middleware/validateMiddleware.js';
 
 const router = express.Router();
-
-// ✅ All routes require authentication
 router.use(verifyToken);
 
-// ✅ USER: Create a scrape
+// ✅ Create scrape
 router.post(
   '/user',
   allowUserOrAdmin,
@@ -26,10 +24,10 @@ router.post(
   createScrape
 );
 
-// ✅ USER: Get own scrapes
-router.get('/user', allowUserOrAdmin, getOwnScrapes);
+// ✅ Get user AI scrapes
+router.get('/user', allowUserOrAdmin, getOwnAIScrapes);
 
-// ✅ ADMIN: Get all scrapes (for admin only)
-router.get('/admin', isAdmin, getAllScrapes);
+// ✅ Get all AI scrapes (admin)
+router.get('/admin', isAdmin, getAllAIScrapes);
 
 export default router;

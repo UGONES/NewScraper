@@ -1,35 +1,35 @@
 import mongoose from 'mongoose';
 
-const scrapeSchema = new mongoose.Schema({
-  source: {
-    type: String,
-    required: true
-  },
-  intro: String,
-  analysis: String,
-  result: {
-    type: String,
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['Pending', 'Success', 'Failed'],
-    default: 'Pending',
-  },
-
-},
+const scrapeSchema = new mongoose.Schema(
   {
-    timestamps: true,
-  }
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    source: {
+      type: String,           // e.g., input URL or prompt
+      required: true
+    },
+    result: {
+      type: String,           // final markdown returned by Gemini
+      required: true
+    },
+    intro: {
+      type: String,
+      default: ''
+    },
+    analysis: {
+      type: String,
+      default: ''
+    },
+    status: {
+      type: String,
+      enum: ['Pending', 'Success', 'Failed'],
+      default: 'Pending'
+    }
+  },
+  { timestamps: true }
 );
 
-export default mongoose.model('Scrape', scrapeSchema);
+export default mongoose.model('AIScrape', scrapeSchema);
