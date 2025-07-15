@@ -1,0 +1,87 @@
+@import 'root.css';
+
+
+@media (min-width: 600px) {
+  .footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .footer-logo {
+    position: relative;
+    text-align: left;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    text-align: left;
+    gap: 20px;
+    margin-bottom: 0;
+    margin-left: 8rem;
+  }
+
+  .footer-socials {
+    margin-bottom: 0;
+    flex-direction: in;
+
+  }
+}
+
+@media (max-width: 992px) {
+  .profile-container {
+    padding: 1rem 2rem;
+  }
+
+  .profile-card {
+    padding: 1rem;
+  }
+
+  .profile-avatar {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .profile-avatar.sticky {
+    top: 20px;
+    left: 20px;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .upload-overlay {
+    font-size: 0.65rem;
+  }
+}
+
+/* Mobile (small screens) */
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 1rem;
+  }
+
+  .scrapes-container,
+  .users-container {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .scrapes-header,
+  .users-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .scrapes-table th,
+  .users-table th,
+  .scrapes-table td,
+  .users-table td {
+    padding: 0.5rem;
+  }
+}
