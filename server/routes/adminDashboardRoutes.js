@@ -11,8 +11,8 @@ import {
   getUserById
 } from "../controllers/userController.js";
 import {
-  getOwnScrapes,
-  getAllScrapes
+  getOwnAIScrapes,
+  getAllAIScrapes
 } from "../controllers/scrapeController.js";
 import {
   getUserProfile,
@@ -29,8 +29,8 @@ router.get("/users/:id", getUserById);
 router.put("/users/:id", updateUser);
 router.delete("/users/:id", deleteUser);
 
-router.get("/scrapes", getOwnScrapes);        // Admin’s own
-router.get("/scrape/all", getAllScrapes);     // All AI scrapes
+router.get("/scrapes", getOwnAIScrapes);        // Admin’s own
+router.get("/scrape/all", getAllAIScrapes);     // All AI scrapes
 router.get("/profile", getUserProfile);
 router.put("/profile", updateUserProfile);
 
