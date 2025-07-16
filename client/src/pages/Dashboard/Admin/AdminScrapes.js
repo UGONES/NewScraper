@@ -23,22 +23,30 @@ const AdminScrapes = () => {
   const [showUserList, setShowUserList] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/scrape/user'),
-      api.get('/scrape/admin')
-    ])
-      .then(([userRes, adminRes]) => {
-        // ✅ Sort both by date (newest first)
+    const fetchData = async () => {
+      await Promise.all([
+        api.get('/scrape/user'),
+        api.get('/scrape/admin')
+      ])
+        .then(([userRes, adminRes]) => {
+          // ✅ Sort both by date (newest first)
         const sortedAdmin = userRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         const sortedAllUsers = adminRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setAdminScrapes(sortedAdmin);
         setAllUserScrapes(sortedAllUsers);
       })
       .catch((err) => {
-        console.error('Error fetching scrapes:', err);
-        setError("Failed to load admin scrapes.");
-      })
+       if (err.response) {
+        console.error('[ERROR] Status:', err.response.status);
+        console.error('[ERROR] Data:', err.response.data);
+      } else {
+        console.error('[ERROR] Admin scrape fetch failed:', err.message);
+      }
+      setError('Failed to load admin scrapes.');
+    })
       .finally(() => setLoading(false));
+    };
+    fetchData();
   }, []);
 
   const handleScrape = async (e) => {

@@ -7,10 +7,16 @@ import {
   // useLocation
 } from 'react-router-dom';
 
-import { useEffect } from 'react';
-import { AuthProvider,
+import {
+  useEffect,
+  useState
+} from 'react';
+import api from './api/axios';
+
+import {
+  AuthProvider,
   //  useAuth
-   } from './context/AuthContext';
+} from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 import Home from './pages/Home';
@@ -33,14 +39,21 @@ import Footer from './components/Footer';
 
 
 export default function App() {
+  const [scrapes, setScrapes] = useState([]);
+
+  // Load scrapes for the navbar
   useEffect(() => {
-  setTimeout(() => console.log("Hi"), 1000);
-}, []);
+    api.get('/scrape/admin') // or '/scrape/user' based on role
+      .then(res => setScrapes(res.data))
+      .catch(err => console.error('Error loading scrapes for navbar:', err));
+    setTimeout(() => console.log("Hi"), 1000);
+  }, []);
 
   return (
     <Router>
       <AuthProvider>
-        <Navbar />
+        <Navbar items={scrapes} />
+
 
         <Routes>
           {/* ── Public routes ── */}
@@ -55,20 +68,20 @@ export default function App() {
           {/* ── Protected routes ── */}
           <Route element={<ProtectedRoute />}>
             {/* layout that adds/removes sidebar as needed */}
-              {/* shared dashboard entry */}
-              <Route path="/dashboard" element={<DashboardRouter />} />
+            {/* shared dashboard entry */}
+            <Route path="/dashboard" element={<DashboardRouter />} />
 
-              {/* ADMIN */}
-              <Route path="/dashboard/admin" element={<AdminDashboardHome />} />
-              <Route path="/admin/scrapes" element={<AdminScrapes />} />
-              <Route path="/admin/users" element={<ManageUsers />} />
-              <Route path="/admin/profile" element={<Profile />} />
+            {/* ADMIN */}
+            <Route path="/dashboard/admin" element={<AdminDashboardHome />} />
+            <Route path="/admin/scrapes" element={<AdminScrapes />} />
+            <Route path="/admin/users" element={<ManageUsers />} />
+            <Route path="/admin/profile" element={<Profile />} />
 
-              {/* USER */}
-              <Route path="/dashboard/user" element={<UserDashboardHome />} />
-              <Route path="/user/scrapes" element={<UserScrapes />} />
-              <Route path="/user/profile" element={<Profile />} />
-            </Route>
+            {/* USER */}
+            <Route path="/dashboard/user" element={<UserDashboardHome />} />
+            <Route path="/user/scrapes" element={<UserScrapes />} />
+            <Route path="/user/profile" element={<Profile />} />
+          </Route>
         </Routes>
 
         <Footer />

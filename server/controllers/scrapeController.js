@@ -1,3 +1,4 @@
+import ScrapeModel from '../models/ScrapeModel.js';
 import Scrape from '../models/ScrapeModel.js';
 import fetch from 'node-fetch'; // ✅ Needed for Node < 18
 
@@ -104,11 +105,21 @@ ${input}
 
 
 export const getOwnAIScrapes = async (req, res) => {
-  const scrapes = await ScrapeModel.find({ userId: req.user.id }).sort("-createdAt");
-  res.json(scrapes);
+    try {
+    const scrapes = await ScrapeModel.find({ userId: req.userId });
+    res.json(scrapes);
+  } catch (error) {
+    console.error('[getUserAIScrapes ERROR]', error);
+    res.status(500).json({ message: 'Failed to fetch user scrapes' });
+  }
 };
 
 export const getAllAIScrapes = async (_req, res) => {
-  const scrapes = await ScrapeModel.find().populate("userId", "username role email");
-  res.json(scrapes);
+  try {
+    const scrapes = await ScrapeModel.find().populate('userId', 'username email');
+    res.json(scrapes);
+  } catch (error) {
+    console.error('[getAllAIScrapes ERROR]', error);
+    res.status(500).json({ message: 'Failed to fetch all scrapes' });
+  }
 };

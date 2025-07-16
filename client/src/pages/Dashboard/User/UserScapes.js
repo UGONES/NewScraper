@@ -17,13 +17,23 @@ const UserScrapes = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    api.get('/scrape/user')
-      .then(({ data }) => setScrapes(data))
-      .catch((err) => {
-        console.error('Failed to load user scrapes:', err);
-        setError('Failed to load scrapes.');
-      })
-      .finally(() => setLoading(false));
+    const fetchScrapes = async () => {
+      try {
+        const { data } = await api.get('/scrape/user');
+        setScrapes(data);
+      } catch (err) {
+        if (err.response) {
+          console.error('[ERROR] Status:', err.response.status);
+          console.error('[ERROR] Data:', err.response.data);
+        } else {
+          console.error('[ERROR] USER scrape fetch failed:', err.message);
+        }
+        setError('Failed to load user scrapes.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchScrapes();
   }, []);
 
   const handleScrape = async (e) => {
