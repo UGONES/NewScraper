@@ -10,28 +10,22 @@ const Navbar = ({ items = [] }) => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState([]);
   const dropdownRef = useRef(null);
   const hamburgerRef = useRef(null);
 
   const token = auth?.token;
   const user = auth;
 
+  const isOnDashboard =
+    location.pathname.includes('/dashboard') || location.pathname.includes('/admin');
+
   const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  // Log the incoming items for debug
-  useEffect(() => {
-    console.log('[DEBUG] Navbar received items:', items);
-  }, [items]);
-
-  // Improved filtering: check title, intro, or source
-  const filtered = items.filter((item) => {
-    const text = item.title || item.intro || item.source || '';
-    return text.toLowerCase().includes(query.toLowerCase());
-  });
 
   const getDashboardLink = () =>
     user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/user';
 
+  // Close menu if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -48,8 +42,22 @@ const Navbar = ({ items = [] }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isOnDashboard =
-    location.pathname.includes('/dashboard') || location.pathname.includes('/admin');
+  // Update filtered items when query or items change
+  useEffect(() => {
+    if (!Array.isArray(items)) return;
+
+    const result = items.filter((item) => {
+      const text = item.title || item.intro || item.source || '';
+      return text.toLowerCase().includes(query.toLowerCase());
+    });
+
+    setFilteredItems(result);
+  }, [query, items]);
+
+  useEffect(() => {
+    console.log('[RENDER DEBUG] items:', items);
+    console.log('[RENDER DEBUG] token:', token);
+  }, [items, token]);
 
   return (
     <div className="navbar-container">
@@ -93,6 +101,7 @@ const Navbar = ({ items = [] }) => {
         </div>
       </nav>
 
+      {/* 🔍 Search bar */}
       <header className="search-header">
         <div className="search-container">
           <input
@@ -103,18 +112,21 @@ const Navbar = ({ items = [] }) => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+
+          {query && (
             <ul className="search-results">
-              {query && filtered.length > 0 ? (
-                filtered.map((item) => (
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item) => (
                   <li key={item._id || item.id} className="result-item">
                     <strong>{item.title || item.source || 'Untitled'}</strong>
                     <p>{item.description || item.intro?.slice(0, 100)}</p>
                   </li>
                 ))
-              ) : query ? (
+              ) : (
                 <li className="no-results">No results found.</li>
-              ) : null}
+              )}
             </ul>
+          )}
         </div>
       </header>
     </div>

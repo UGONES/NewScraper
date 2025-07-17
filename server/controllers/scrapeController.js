@@ -44,7 +44,8 @@ ${input}
             })
           }
         );
-
+        console.log('[DEBUG] Gemini API Key in use:', process.env.GEMINI_API_KEY);
+        
         data = await response.json();
 
         if (!response.ok) {
@@ -105,14 +106,15 @@ ${input}
 
 
 export const getOwnAIScrapes = async (req, res) => {
-    try {
-    const scrapes = await ScrapeModel.find({ userId: req.userId });
+  try {
+    const scrapes = await ScrapeModel.find({ userId: req.user.id }); // FIXED
     res.json(scrapes);
   } catch (error) {
     console.error('[getUserAIScrapes ERROR]', error);
     res.status(500).json({ message: 'Failed to fetch user scrapes' });
   }
 };
+
 
 export const getAllAIScrapes = async (_req, res) => {
   try {
