@@ -32,4 +32,4 @@ const scrapeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('AIScrape', scrapeSchema);
+export default mongoose.model('Scrape', scrapeSchema, 'scrapes');

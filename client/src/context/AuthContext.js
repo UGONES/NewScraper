@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         clearStoredAuth();
       }
     }
-   
+
     return null;
   });
 
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
         username: decoded.username,
         userId: decoded.userId || decoded.id,
       };
-    console.log('[DEBUG] Auth login:', cleanAuth);
+      console.log('[DEBUG] Auth login:', cleanAuth);
 
       setAuth(cleanAuth);
       setStoredAuth(cleanAuth);
@@ -78,10 +78,9 @@ export const AuthProvider = ({ children }) => {
         const exp = decoded.exp * 1000;
         const now = Date.now();
         const timeout = exp - now;
-
         if (timeout <= 0) {
           logout();
-        } else {
+        } else if (timeout > 1000) {
           const timer = setTimeout(() => logout(), timeout);
           return () => clearTimeout(timer);
         }
