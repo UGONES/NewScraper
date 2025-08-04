@@ -3,9 +3,10 @@ import fetch from 'node-fetch'; // ✅ Needed for Node < 18
 
 export const createScrape = async (req, res, next) => {
   try {
+    const userId = req.user?.id || req.userId;
     const { input } = req.body;
 
-    if (!req.user?.id) {
+    if (!userId) {
       return res.status(401).json({ error: 'Unauthorized: Missing user ID' });
     }
 

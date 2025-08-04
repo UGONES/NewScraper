@@ -1,3 +1,5 @@
+// AuthContext.js
+
 import {
   createContext,
   useContext,
@@ -21,6 +23,10 @@ export const AuthProvider = ({ children }) => {
     if (stored?.token) {
       try {
         const decoded = jwtDecode(stored.token);
+        if (!decoded?.role || !decoded?.username || (!decoded?.id && !decoded?.userId)) {
+          throw new Error("Invalid token payload on load");
+        }
+
         return {
           token: stored.token,
           role: decoded.role,
@@ -28,29 +34,31 @@ export const AuthProvider = ({ children }) => {
           userId: decoded.userId || decoded.id,
         };
       } catch (err) {
-        console.error("Invalid token on load:", err);
+        console.error("Auth init failed:", err);
         clearStoredAuth();
+        return null;
       }
     }
-
     return null;
   });
 
   // 🔁 Memoized logout
   const logout = useCallback(() => {
-    setAuth(null);
     clearStoredAuth();
+    setAuth(null);
   }, []);
 
-  // 🔁 Memoized login
   const login = useCallback((payload) => {
     try {
       if (!payload) return;
 
       const token = typeof payload === 'string' ? payload : payload.token;
       const decoded = jwtDecode(token);
-
-      if (!decoded?.role || !decoded?.username || (!decoded?.id && !decoded?.userId)) {
+      if (
+        !decoded?.role ||
+        !decoded?.username ||
+        (!decoded?.id && !decoded?.userId)
+      ) {
         throw new Error("Invalid token payload");
       }
 
@@ -60,7 +68,6 @@ export const AuthProvider = ({ children }) => {
         username: decoded.username,
         userId: decoded.userId || decoded.id,
       };
-      console.log('[DEBUG] Auth login:', cleanAuth);
 
       setAuth(cleanAuth);
       setStoredAuth(cleanAuth);
@@ -70,30 +77,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
-  // Auto-expire token
   useEffect(() => {
-    if (auth?.token) {
-      try {
-        const decoded = jwtDecode(auth.token);
-        const exp = decoded.exp * 1000;
-        const now = Date.now();
-        const timeout = exp - now;
-        if (timeout <= 0) {
-          logout();
-        } else if (timeout > 1000) {
-          const timer = setTimeout(() => logout(), timeout);
-          return () => clearTimeout(timer);
-        }
-      } catch (err) {
-        console.error("Token decode error:", err);
-        logout();
-      }
-    } else {
+    if (!auth?.token) {
       clearStoredAuth();
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode(auth.token);
+      const exp = decoded.exp * 1000;
+      const now = Date.now();
+
+      if (exp < now) {
+        console.warn("Token expired, logging out.");
+        logout();
+        return;
+      }
+
+      const timeout = exp - now;
+      const timer = setTimeout(() => logout(), timeout);
+
+      return () => clearTimeout(timer);
+    } catch (err) {
+      console.error("Token check error:", err);
+      logout();
     }
   }, [auth, logout]);
 
-  // ✅ Fixes React warning: include login/logout in useMemo
   const value = useMemo(() => ({ auth, login, logout }), [auth, login, logout]);
 
   return (

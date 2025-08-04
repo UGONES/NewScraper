@@ -93,7 +93,8 @@ export const deleteUser = async (req, res) => {
 // 👤 Get profile (token-based)
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    const userId = req.user.id; // ✅ CORRECT
+    const user = await User.findById(userId).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (err) {
@@ -101,15 +102,13 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
-// ✏️ Update own profile
 export const updateUserProfile = async (req, res) => {
   try {
-    const { username, email, bio, fullName, description, gender } = req.body;
-    const user = await User.findById(req.user.userId);
-
+    const user = await User.findById(req.user.id); // ✅ CORRECT
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Check for duplicate email
+    const { username, email, bio, fullName, description, gender } = req.body;
+
     if (email && email !== user.email) {
       const exists = await User.findOne({ email });
       if (exists) return res.status(400).json({ message: 'Email already in use' });
@@ -125,12 +124,13 @@ export const updateUserProfile = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: 'Profile updated', user });
+    res.json(user); // ✅ Keep return shape consistent
   } catch (err) {
     console.error('Update profile error:', err.message);
     res.status(500).json({ message: 'Failed to update profile' });
   }
 };
+
 
 // 🔐 Change password (logged-in user)
 export const changePassword = async (req, res) => {

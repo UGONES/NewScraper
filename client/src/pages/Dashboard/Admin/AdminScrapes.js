@@ -29,25 +29,34 @@ const AdminScrapes = () => {
         api.get('/scrape/admin')
       ])
         .then(([userRes, adminRes]) => {
-          // ✅ Sort both by date (newest first)
-        const sortedAdmin = userRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const sortedAllUsers = adminRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setAdminScrapes(sortedAdmin);
-        setAllUserScrapes(sortedAllUsers);
-      })
-      .catch((err) => {
-       if (err.response) {
-        console.error('[ERROR] Status:', err.response.status);
-        console.error('[ERROR] Data:', err.response.data);
-      } else {
-        console.error('[ERROR] Admin scrape fetch failed:', err.message);
-      }
-      setError('Failed to load admin scrapes.');
-    })
-      .finally(() => setLoading(false));
+          const sortedAdmin = userRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setAdminScrapes(sortedAdmin);
+
+          // Separate out user scrapes only (exclude admin's)
+          const allScrapes = adminRes.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          const adminId = auth?.user?._id;
+          const adminUsername = auth?.user?.username;
+
+          const userScrapesOnly = allScrapes.filter(scrape =>
+            scrape.userId && scrape.userId._id !== adminId && scrape.userId.username !== adminUsername
+          );
+
+          setAllUserScrapes(userScrapesOnly);
+        })
+        .catch((err) => {
+          if (err.response) {
+            console.error('[ERROR] Status:', err.response.status);
+            console.error('[ERROR] Data:', err.response.data);
+          } else {
+            console.error('[ERROR] Admin scrape fetch failed:', err.message);
+          }
+          setError('Failed to load admin scrapes.');
+        })
+        .finally(() => setLoading(false));
     };
     fetchData();
   }, []);
+
 
   const handleScrape = async (e) => {
     e.preventDefault();
@@ -102,7 +111,6 @@ const AdminScrapes = () => {
           <FiMenu />
         </button>
       )}
-
       {sidebarOpen && (
         <div className="history-overlay" onClick={() => setSidebarOpen(false)}>
           <aside className="history-sidebar open" onClick={(e) => e.stopPropagation()}>
@@ -113,21 +121,31 @@ const AdminScrapes = () => {
                 <FiX />
               </button>
             </h2>
-            <div className="history-list">
-              {adminScrapes.map((scrape) => (
-                <button
-                  key={scrape._id}
-                  className="history-item"
-                  onClick={() => {
-                    setSelectedScrape(scrape);
-                    setShowAnalysis(false);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <div>{scrape.source.slice(0, 20)}</div>
-                  <small>{formatDate(scrape.createdAt)}</small>
-                </button>
-              ))}
+
+            <div className="history-section">
+              <h3 className="history-subtitle">Your Scrapes</h3>
+              <div className="history-list">
+                {adminScrapes.length === 0 ? (
+                  <p className="empty-msg">
+                    No scrapes yet.
+                  </p>
+                ) : (
+                  adminScrapes.map((scrape) => (
+                    <button
+                      key={scrape._id}
+                      className="history-item"
+                      onClick={() => {
+                        setSelectedScrape(scrape);
+                        setShowAnalysis(false);
+                        setSidebarOpen(false);
+                      }}
+                    >
+                      <div>{scrape.source?.slice(0, 20)}</div>
+                      <small>{formatDate(scrape.createdAt)}</small>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </aside>
         </div>

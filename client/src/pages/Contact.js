@@ -46,7 +46,7 @@ export default function Contact() {
 
       <div className="auth-header">
         <h2 className="auth-title">Contact Us:</h2>
-        <p className="auth-description">We'd love to hear from you! Please fill out the form below.</p>
+        <p className=" card auth-description">We'd love to hear from you! Please fill out the form below.</p>
       </div>
       {formError && (
         <div className="popup-message error">

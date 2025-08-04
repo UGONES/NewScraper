@@ -2,11 +2,11 @@ import jwtDecode from 'jwt-decode';
 
 export const getStoredAuth = () => {
   try {
-    const raw = localStorage.getItem('scraperAuth');
+    const raw = sessionStorage.getItem('scraperAuth');
     if (!raw) return null;
 
-    const data = JSON.parse(raw);
-    const decoded = jwtDecode(data.token);
+    const { token } = JSON.parse(raw);
+    const decoded = jwtDecode(token);
 
     // Token expired?
     if (decoded.exp * 1000 < Date.now()) {
@@ -14,18 +14,29 @@ export const getStoredAuth = () => {
       return null;
     }
 
-    return data;
-  } catch (err) {
-  clearStoredAuth();
-  return null;
-}
+    // Validate expected fields
+    if (!decoded?.role || !decoded?.username || (!decoded?.id && !decoded?.userId)) {
+      clearStoredAuth();
+      return null;
+    }
 
+    return {
+      token,
+      role: decoded.role,
+      username: decoded.username,
+      userId: decoded.id || decoded.userId,
+    };
+  } catch (err) {
+    clearStoredAuth();
+    return null;
+  }
 };
 
+
 export const setStoredAuth = (data) => {
-  localStorage.setItem('scraperAuth', JSON.stringify(data));
+  sessionStorage.setItem('scraperAuth', JSON.stringify(data));
 };
 
 export const clearStoredAuth = () => {
-  localStorage.removeItem('scraperAuth');
+  sessionStorage.removeItem('scraperAuth');
 };

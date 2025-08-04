@@ -5,17 +5,16 @@ import Sidebar from '../components/Sidebar';
 import DashboardHome from './DashboardHome';
 import '../css/dashboard.css';
 
-export default function UserDashboardHome() {
+const UserDashboardHome = () => {
   const { auth } = useAuth();
   const [stats, setStats] = useState(null);
-  const [error, setError] = useState('');
   const [myScrapes, setMyScrapes] = useState([]);
-
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!auth?.token) return;
+    if (!auth?.role || auth.role !== 'user') return;
 
-    const load = async () => {
+    const fetchSummary = async () => {
       try {
         const { data } = await api.get('/dashboard/user/summary');
         setStats(data);
@@ -24,10 +23,17 @@ export default function UserDashboardHome() {
       }
     };
 
-    api.get("/scrape/user") // 👈 user's own scrapes
-      .then(({ data }) => setMyScrapes(data))
-      .catch(err => console.error("Error fetching user's scrapes:", err));
-    load();
+    const fetchUserScrapes = async () => {
+      try {
+        const { data } = await api.get("/scrape/user");
+        setMyScrapes(data);
+      } catch (err) {
+        console.error("Error fetching user's scrapes:", err);
+      }
+    };
+
+    fetchSummary();
+    fetchUserScrapes();
   }, [auth]);
 
   return (
@@ -55,3 +61,5 @@ export default function UserDashboardHome() {
     </div>
   );
 }
+
+export default UserDashboardHome;

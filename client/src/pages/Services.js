@@ -8,7 +8,7 @@ export default function Services() {
       <div className="page">
         <h1>Our Services</h1>
         <div className="card">
-          <ul className="service-list">
+          <ul className="service-list card">
             <li className="card">
               <h3>Smart Web Scraping</h3>
               <p>Scrape structured data like titles, links, or entire HTML from public websites.</p>

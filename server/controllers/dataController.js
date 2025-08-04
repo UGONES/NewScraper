@@ -40,11 +40,18 @@ export const getProtected = async (req, res) => {
 };
 
 export const getUserScrapes = async (req, res) => {
-  try {
-    const userScrapes = await ScrapedData.find({ userId: req.user.userId }).sort({ createdAt: -1 });
-    res.json(userScrapes);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch user-specific scrapes' });
+ try {
+    const userId = req.user?.id || req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized access' });
+    }
+
+    const scrapes = await scrapes.find({ user: userId }).sort({ createdAt: -1 });
+
+    return res.status(200).json(scrapes); // Always return 200, even if empty []
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to fetch scrapes', error: error.message });
   }
 };
 

@@ -41,7 +41,7 @@ api.interceptors.response.use(
       console.warn(`[axios] Token possibly expired or rejected.`);
 
       const isAuthRelated = error.response?.data?.message?.toLowerCase().includes('token') ||
-                            error.response?.data?.message?.toLowerCase().includes('unauthorized');
+        error.response?.data?.message?.toLowerCase().includes('unauthorized');
 
       if (isAuthRelated) {
         clearStoredAuth();

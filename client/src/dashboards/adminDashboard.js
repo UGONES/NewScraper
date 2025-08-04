@@ -15,22 +15,36 @@ const Card = ({ title, value }) => (
 const AdminDashboardHome = () => {
   const { auth } = useAuth();
   const [stats, setStats] = useState({ totalUsers: 0, totalScrapes: 0 });
+  const [myScrapes, setMyScrapes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [myScrapes, setMyScrapes] = useState([]);
 
   useEffect(() => {
-    api.get("/dashboard/admin/summary")
-      .then(({ data }) => setStats(data))
-      .catch((err) => {
-        setError(err.response?.data?.message || 'Failed to load summary');
-      })
-      .finally(() => setLoading(false));
+    if (!auth?.role || auth.role !== 'admin') return;
 
-    api.get("/scrape/user") // 👈 Admin's own scrapes
-      .then(({ data }) => setMyScrapes(data))
-      .catch(err => console.error("Error fetching admin scrapes:", err));
-  }, []);
+    const fetchSummary = async () => {
+      try {
+        const { data } = await api.get("/dashboard/admin/summary");
+        setStats(data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load summary');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchAdminScrapes = async () => {
+      try {
+        const { data } = await api.get("/scrape/user"); // Admin's own scrapes
+        setMyScrapes(data);
+      } catch (err) {
+        console.error("Error fetching admin scrapes:", err);
+      }
+    };
+
+    fetchSummary();
+    fetchAdminScrapes();
+  }, [auth]);
 
   return (
     <div className="dashboard-wrapper">

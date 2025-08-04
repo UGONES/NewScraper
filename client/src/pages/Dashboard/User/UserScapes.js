@@ -20,6 +20,7 @@ const UserScrapes = () => {
     const fetchScrapes = async () => {
       try {
         const { data } = await api.get('/scrape/user');
+        console.log('[DEBUG] Fetched scrapes:', data);
         setScrapes(data);
       } catch (err) {
         if (err.response) {
@@ -87,21 +88,31 @@ const UserScrapes = () => {
                 <FiX />
               </button>
             </h2>
-            <div className="history-list">
-              {scrapes.map((scrape) => (
-                <button
-                  key={scrape._id}
-                  className="history-item"
-                  onClick={() => {
-                    setSelectedScrape(scrape);
-                    setShowAnalysis(false);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <div>{scrape.source.slice(0, 20)}</div>
-                  <small>{formatDate(scrape.createdAt)}</small>
-                </button>
-              ))}
+
+            <div className="history-section">
+              <h3 className="history-subtitle">Your Scrapes</h3>
+              <div className="history-list">
+                {scrapes.length === 0 ? (
+                  <p className="empty-msg">
+                    No scrapes yet.
+                  </p>
+                ) : (
+                  scrapes.map((scrape) => (
+                    <button
+                      key={scrape._id}
+                      className="history-item"
+                      onClick={() => {
+                        setSelectedScrape(scrape);
+                        setShowAnalysis(false);
+                        setSidebarOpen(false);
+                      }}
+                    >
+                      <div>{scrape.source?.slice(0, 20)}</div>
+                      <small>{formatDate(scrape.createdAt)}</small>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </aside>
         </div>
